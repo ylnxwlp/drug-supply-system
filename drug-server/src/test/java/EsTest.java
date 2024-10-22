@@ -1,4 +1,7 @@
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.aggregations.Aggregate;
+import co.elastic.clients.elasticsearch._types.aggregations.StringTermsAggregate;
+import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
 import co.elastic.clients.elasticsearch.core.*;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.indices.CreateIndexResponse;
@@ -12,6 +15,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.io.IOException;
+import java.util.Map;
 
 @SpringBootTest(classes = ElasticsearchConfig.class)
 @EnableConfigurationProperties(ElasticsearchProperties.class)
@@ -37,7 +41,7 @@ public class EsTest {
                 .mappings(m -> m    // 设置映射
                         .properties("content", p -> p
                                 .text(t -> t
-                                        .analyzer("ik_smart"))    // content 字段为文本类型
+                                        .analyzer("ik_max_word"))    // content 字段为文本类型
                         )
                         .properties("title", p -> p
                                 .keyword(k -> k) // title 字段为 keyword 类型
@@ -55,10 +59,9 @@ public class EsTest {
         // 创建一个新文档并索引到 "my_index"
         IndexResponse indexResponse = elasticsearchClient.index(i -> i
                 .index("my_index")  // 索引名称
-                .id("1")            // 文档ID，如果不指定会自动生成
-                .document(new com.supply.entity.Test("福州大学水电费真是一滩狗屎", "吐槽", "S")) // 文档内容，MyDocument是自定义对象
+                .id("2")            // 文档ID，如果不指定会自动生成
+                .document(new com.supply.entity.Test("福州大学黄翔是我儿子", "真相", "S")) // 文档内容，MyDocument是自定义对象
         );
-
         System.out.println("Document indexed with ID: " + indexResponse.id());
     }
 
@@ -71,7 +74,9 @@ public class EsTest {
                 com.supply.entity.Test.class   // 将返回的文档反序列化为 MyDocument 类型
         );
         com.supply.entity.Test document = getResponse.source();
-        System.out.println("Retrieved document content: " + document.getContent());
+        if (document != null) {
+            System.out.println("Retrieved document content: " + document.getContent());
+        }
     }
 
     @Test
@@ -89,7 +94,9 @@ public class EsTest {
         );
 
         for (Hit<com.supply.entity.Test> hit : searchResponse.hits().hits()) {
-            System.out.println("Found document: " + hit.source().getContent());
+            if (hit.source() != null) {
+                System.out.println("Found document: " + hit.source().getContent());
+            }
         }
     }
 
@@ -99,7 +106,7 @@ public class EsTest {
         UpdateResponse<com.supply.entity.Test> updateResponse = elasticsearchClient.update(u -> u
                         .index("my_index") // 索引名称
                         .id("1")           // 文档ID
-                        .doc(new com.supply.entity.Test("福州大学就是依托答辩","吐槽","S")), // 更新文档内容
+                        .doc(new com.supply.entity.Test("福州大学就是依托答辩", "吐槽", "S")), // 更新文档内容
                 com.supply.entity.Test.class // 文档类型
         );
         System.out.println("Document updated with new content: " + updateResponse.result());
@@ -108,7 +115,7 @@ public class EsTest {
     @Test
     public void test5() throws IOException {
         // 删除 ID 为 1 的文档
-        DeleteResponse deleteResponse = elasticsearchClient.delete(d -> d
+        elasticsearchClient.delete(d -> d
                 .index("my_index") // 索引名称
                 .id("1")           // 文档ID
         );
@@ -149,6 +156,99 @@ public class EsTest {
             System.out.println("Index exists.");
         } else {
             System.out.println("Index does not exist.");
+        }
+    }
+
+    @Test
+    public void testCompositeQuery() throws IOException {
+        // 执行复合查询
+        SearchResponse<com.supply.entity.Test> searchResponse = elasticsearchClient.search(s -> s
+                        .index("my_index") // 索引名称
+                        .query(q -> q
+                                .bool(b -> b // 使用 bool 查询
+                                        .must(m -> m // must 子句，表示必须满足的条件
+                                                .match(mq -> mq     //match表示关键字查询
+                                                        .field("content") // 查询字段
+                                                        .query("狗屎大学") // 查询关键词
+                                                )
+                                        )
+                                        .filter(f -> f // filter 子句，表示过滤条件
+                                                .term(t -> t    //term表示精确匹配
+                                                        .field("title") // 过滤字段
+                                                        .value("真相") // 过滤值
+                                                )
+                                        )
+                                )
+                        ),
+                com.supply.entity.Test.class // 文档类型
+        );
+
+        // 输出查询结果
+        for (Hit<com.supply.entity.Test> hit : searchResponse.hits().hits()) {
+            if (hit.source() != null) {
+                System.out.println("Found document: " + hit.source().getContent());
+            }
+        }
+    }
+
+    @Test
+    public void testHighlightQuery() throws IOException {
+        // 执行搜索并启用高亮
+        SearchResponse<com.supply.entity.Test> searchResponse = elasticsearchClient.search(s -> s
+                        .index("my_index") // 索引名称
+                        .query(q -> q
+                                .match(m -> m
+                                        .field("content") // 查询字段
+                                        .query("吃狗屎") // 查询关键词
+                                )
+                        )
+                        .highlight(h -> h // 添加高亮选项
+                                .fields("content", hf -> hf // 指定高亮字段
+                                        .preTags("<em>") // 高亮前缀
+                                        .postTags("</em>") // 高亮后缀
+                                )
+                        ),
+                com.supply.entity.Test.class // 文档类型
+        );
+
+        // 输出查询结果和高亮内容
+        for (Hit<com.supply.entity.Test> hit : searchResponse.hits().hits()) {
+            System.out.println("Found document ID: " + hit.id());
+
+            // 获取高亮内容
+            if (hit.highlight() != null && hit.highlight().containsKey("content")) {
+                for (String highlight : hit.highlight().get("content")) {
+                    System.out.println("Highlighted content: " + highlight);
+                }
+            } else {
+                System.out.println("No highlighted content.");
+            }
+        }
+    }
+
+    @Test
+    public void testAggregationQuery() throws IOException {
+        // 执行聚合查询
+        SearchResponse<Void> searchResponse = elasticsearchClient.search(s -> s
+                        .index("my_index") // 索引名称
+                        .size(0) // 不需要返回实际文档，只需要聚合结果
+                        .aggregations("author_count", a -> a
+                                .terms(t -> t
+                                        .field("author.keyword") // 聚合字段
+                                        .size(10)  // 限制返回的结果数量
+                                )
+                        ),
+                Void.class // 不需要文档结果，只关注聚合结果
+        );
+
+        // 获取聚合结果
+        Map<String, Aggregate> aggregations = searchResponse.aggregations();
+
+        // 从聚合结果中提取指定的terms聚合
+        StringTermsAggregate authorCountAggregation = aggregations.get("author_count").sterms();
+
+        for (StringTermsBucket stringTermsBucket : authorCountAggregation.buckets().array()) {
+            System.out.println("Author: " + stringTermsBucket.key().stringValue() + ", Document Count: " + stringTermsBucket.docCount());
         }
     }
 }
