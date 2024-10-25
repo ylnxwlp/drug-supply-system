@@ -2,6 +2,7 @@ package com.supply.controller;
 
 import com.supply.dto.DrugInformationDTO;
 import com.supply.dto.DrugNumberChangeDTO;
+import com.supply.dto.FlashSaleDrugDTO;
 import com.supply.dto.PageQueryDTO;
 import com.supply.result.PageResult;
 import com.supply.result.Result;
@@ -89,6 +90,14 @@ public class SupplyController {
     @PreAuthorize("hasAuthority('supply:agree')")
     public Result<Object> dealRequest(@PathVariable Long id, @RequestParam Integer drugAgree) {
         supplyService.dealRequest(id, drugAgree);
+        return Result.success();
+    }
+
+    @PostMapping()
+    @Operation(summary = "抢购药品发布接口")
+    @PreAuthorize("hasAuthority('supply:flashSale')")
+    public Result<Object> releaseFlashSale(@Valid @RequestBody FlashSaleDrugDTO flashSaleDrugDTO){
+        supplyService.releaseFlashSale(flashSaleDrugDTO);
         return Result.success();
     }
 }

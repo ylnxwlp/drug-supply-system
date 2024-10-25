@@ -2,6 +2,7 @@ package com.supply.service;
 
 import com.supply.dto.DrugInformationDTO;
 import com.supply.dto.DrugNumberChangeDTO;
+import com.supply.dto.FlashSaleDrugDTO;
 import com.supply.dto.PageQueryDTO;
 import com.supply.result.PageResult;
 import com.supply.vo.RequestVO;
@@ -29,4 +30,6 @@ public interface SupplyService {
     List<RequestVO> getDrugRequestInformation();
 
     void dealRequest(Long id, Integer drugAgree);
+
+    void releaseFlashSale(FlashSaleDrugDTO flashSaleDrugDTO);
 }

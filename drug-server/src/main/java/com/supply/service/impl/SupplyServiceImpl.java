@@ -6,11 +6,9 @@ import cn.hutool.core.util.RandomUtil;
 import com.github.pagehelper.PageHelper;
 import com.supply.dto.DrugInformationDTO;
 import com.supply.dto.DrugNumberChangeDTO;
+import com.supply.dto.FlashSaleDrugDTO;
 import com.supply.dto.PageQueryDTO;
-import com.supply.entity.LoginUser;
-import com.supply.entity.Request;
-import com.supply.entity.SupplyDrug;
-import com.supply.entity.User;
+import com.supply.entity.*;
 import com.supply.mapper.SupplyMapper;
 import com.supply.mapper.UserMapper;
 import com.supply.result.PageResult;
@@ -27,6 +25,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -199,6 +198,24 @@ public class SupplyServiceImpl implements SupplyService {
         log.info("供应端对该次药品请求决定：{}", drugAgree);
         supplyMapper.dealRequest(id, drugAgree, LocalDateTime.now());
         redisTemplate.delete("supply:request:" + userId);
+    }
+
+    /**
+     * 抢购药品发布
+     * @param flashSaleDrugDTO 抢购药品信息
+     */
+    public void releaseFlashSale(FlashSaleDrugDTO flashSaleDrugDTO) {
+        Long userId = getCurrentUserId();
+        FlashSaleDrug flashSaleDrug = FlashSaleDrug.builder()
+                .userId(userId)
+                .beginTime(LocalDateTime.parse(flashSaleDrugDTO.getBeginTime(), DateTimeFormatter.ofPattern(DatePattern.NORM_DATETIME_PATTERN)))
+                .endTime(LocalDateTime.parse(flashSaleDrugDTO.getEndTime(),DateTimeFormatter.ofPattern(DatePattern.NORM_DATETIME_PATTERN)))
+                .drugName(flashSaleDrugDTO.getDrugName())
+                .number(flashSaleDrugDTO.getNumber())
+                .build();
+        supplyMapper.releaseFlashSale(flashSaleDrug);
+        redisTemplate.opsForValue().set("flashSale:drug:" + flashSaleDrug.getId(), flashSaleDrug.getNumber());
+        redisTemplate.delete("FlashSaleDrugs");
     }
 
     /**

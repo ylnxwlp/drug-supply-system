@@ -2,6 +2,7 @@ package com.supply.mapper;
 
 
 import com.supply.dto.DrugInformationDTO;
+import com.supply.entity.FlashSaleDrug;
 import com.supply.entity.Request;
 import com.supply.entity.SupplyDrug;
 import org.apache.ibatis.annotations.*;
@@ -73,4 +74,13 @@ public interface SupplyMapper {
      */
     @Update("update request set isAgree = #{drugAgree} and response_time = #{now} where id = #{id}")
     void dealRequest(Long id, Integer drugAgree, LocalDateTime now);
+
+    /**
+     * 发布抢购药品
+     *
+     * @param flashSaleDrug 抢购药品信息
+     */
+    @Insert("insert into flash_sale_drug(user_id, drug_name, number, begin_time, end_time) VALUES (#{userId},#{drugName},#{number},#{beginTime},#{endTime})")
+    @Options(useGeneratedKeys = true, keyProperty = "id")
+    void releaseFlashSale(FlashSaleDrug flashSaleDrug);
 }

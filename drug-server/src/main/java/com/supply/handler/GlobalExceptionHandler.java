@@ -59,4 +59,11 @@ public class GlobalExceptionHandler {
         log.error("异常信息：{}", ex.getMessage());
         return Result.error(ex.getMessage());
     }
+
+    @ExceptionHandler(FlashSaleException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public Result<Object> flashSaleExceptionHandler(FlashSaleException ex) {
+        log.error("异常信息：{}", ex.getMessage());
+        return Result.error(ex.getMessage());
+    }
 }
