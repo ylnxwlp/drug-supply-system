@@ -96,7 +96,7 @@ public class MedicalServiceImpl implements MedicalService {
                         }
                     }
                     log.info("秒杀商品信息：{}", list);
-                    redisTemplate.opsForValue().set("flashSaleDrugs", list, 8 + RandomUtil.randomInt(10), TimeUnit.MINUTES);
+                    redisTemplate.opsForValue().set("flashSaleDrugs", list, 30 + RandomUtil.randomInt(10), TimeUnit.SECONDS);
                 } finally {
                     lock.unlock();
                 }
@@ -129,14 +129,14 @@ public class MedicalServiceImpl implements MedicalService {
                 o = redisTemplate.opsForValue().get("flashSaleDrug:" + id);
                 if (o == null) {
                     flashSaleDrug = medicalMapper.getFlashSaleDrug(id);
-                    redisTemplate.opsForValue().set("flashSaleDrug:" + id, flashSaleDrug, 10 + RandomUtil.randomInt(5), TimeUnit.MINUTES);
+                    redisTemplate.opsForValue().set("flashSaleDrug:" + id, flashSaleDrug, 15, TimeUnit.SECONDS);
                     lock.unlock();
-                }else{
+                } else {
                     log.info("发现缓存重建完成，直接使用");
                     lock.unlock();
                     flashSaleDrug = JSON.parseObject(o.toString(), FlashSaleDrug.class);
                 }
-            }else{
+            } else {
                 throw new FlashSaleException(MessageConstant.FLASH_SALE_BUSY);
             }
         } else {

@@ -5,6 +5,7 @@ import com.supply.entity.FlashSaleDrug;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -37,4 +38,11 @@ public interface MedicalMapper {
      */
     @Insert("insert into flash_sale(flash_sale_drug_id, user_id, order_number, order_time, status) VALUES (#{flashSaleDrugId},#{userId},#{orderNumber},#{orderTime},#{status})")
     void storeFlashSaleInformation(FlashSale flashSale);
+
+    /**
+     * 扣减库存
+     * @param id 商品库存
+     */
+    @Update("update flash_sale_drug set number = number - 1 where id = #{id}")
+    void inventoryDeduction(Long id);
 }

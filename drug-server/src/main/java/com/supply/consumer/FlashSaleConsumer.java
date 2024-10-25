@@ -15,6 +15,7 @@ import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.date.DatePattern;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
@@ -33,6 +34,7 @@ public class FlashSaleConsumer {
             exchange = @Exchange(name = "flashSale.direct"),
             key = {"flashSaleDirect"}
     ))
+    @Transactional
     public void listenFinishQueue(Message message) {
         String messageId = message.getMessageProperties().getMessageId();
         String messageBody = new String(message.getBody());
@@ -41,16 +43,17 @@ public class FlashSaleConsumer {
         // 持久化信息进数据库
         FlashSaleInformation flashSaleInformation = JSON.parseObject(messageBody, FlashSaleInformation.class);
         Object o = redisTemplate.opsForValue().get("message:" + messageId);
-        FlashSale flashSale = FlashSale.builder()
-                .flashSaleDrugId(flashSaleInformation.getId())
-                .orderNumber(flashSaleInformation.getOrderNumber().toString())
-                .userId(flashSaleInformation.getUserId())
-                .status(2)
-                .orderTime(flashSaleInformation.getOrderTime())
-                .build();
         if (o == null) {
             //未被消费，直接进行持久化
+            FlashSale flashSale = FlashSale.builder()
+                    .flashSaleDrugId(flashSaleInformation.getId())
+                    .orderNumber(flashSaleInformation.getOrderNumber().toString())
+                    .userId(flashSaleInformation.getUserId())
+                    .status(2)
+                    .orderTime(flashSaleInformation.getOrderTime())
+                    .build();
             medicalMapper.storeFlashSaleInformation(flashSale);
+            medicalMapper.inventoryDeduction(flashSaleInformation.getId());
             redisTemplate.opsForValue().set("message:" + messageId, 1, flashSaleInformation.getTimeOfDuration() + 5L, TimeUnit.MINUTES);
         }
     }
