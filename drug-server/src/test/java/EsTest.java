@@ -59,8 +59,8 @@ public class EsTest {
         // 创建一个新文档并索引到 "my_index"
         IndexResponse indexResponse = elasticsearchClient.index(i -> i
                 .index("my_index")  // 索引名称
-                .id("2")            // 文档ID，如果不指定会自动生成
-                .document(new com.supply.entity.Test("福州大学黄翔是我儿子", "真相", "S")) // 文档内容，MyDocument是自定义对象
+                .id("1")            // 文档ID，如果不指定会自动生成
+                .document(new com.supply.entity.Test("福州大学水电费爆炸？", "真相", "S")) // 文档内容，MyDocument是自定义对象
         );
         System.out.println("Document indexed with ID: " + indexResponse.id());
     }
@@ -106,7 +106,7 @@ public class EsTest {
         UpdateResponse<com.supply.entity.Test> updateResponse = elasticsearchClient.update(u -> u
                         .index("my_index") // 索引名称
                         .id("1")           // 文档ID
-                        .doc(new com.supply.entity.Test("福州大学就是依托答辩", "吐槽", "S")), // 更新文档内容
+                        .doc(new com.supply.entity.Test("福州大学水电费真是一滩狗屎", "吐槽", "S")), // 更新文档内容
                 com.supply.entity.Test.class // 文档类型
         );
         System.out.println("Document updated with new content: " + updateResponse.result());
