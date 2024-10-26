@@ -214,8 +214,8 @@ public class SupplyServiceImpl implements SupplyService {
                 .number(flashSaleDrugDTO.getNumber())
                 .build();
         supplyMapper.releaseFlashSale(flashSaleDrug);
-        redisTemplate.opsForValue().set("flashSale:drug:" + flashSaleDrug.getId(), flashSaleDrug.getNumber());
-        redisTemplate.delete("FlashSaleDrugs");
+        redisTemplate.opsForValue().set("flashSale:drugNumber:" + flashSaleDrug.getId(), flashSaleDrug.getNumber());
+        redisTemplate.delete("flashSaleDrugs");
     }
 
     /**
