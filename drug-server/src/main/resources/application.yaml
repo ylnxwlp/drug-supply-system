@@ -54,8 +54,8 @@ spring:
           stateless: false
   elasticsearch:
     uris: http://192.168.65.150:9200
-    username: elastic
-    password: yrq@1612
+    username: ${drug.elasticsearch.username}
+    password: ${drug.rabbitmq.password}
 logging:
   file:
     name: drug-server/src/main/resources/templates/logs.log

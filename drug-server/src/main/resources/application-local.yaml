@@ -27,6 +27,9 @@ drug:
     virtual-host: /drug
     username: drug
     password: YLNX[OX1pyq9A24fQVfzechST+F0k6vmxd/rINMjpflCN+dN8JdK25YwbxDNfEFQ5j8dz]
+  elasticsearch:
+    username: elastic
+    password: YLNX[OX1pyq9A24fQVfzechST+F0k6vmxd/rINMjpflCN+dN8JdK25YwbxDNfEFQ5j8dz]
 jasypt:
   encryptor:
     password: ylnxwlp
